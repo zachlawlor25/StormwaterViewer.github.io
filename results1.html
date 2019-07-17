@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Stormwater Viewer</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+    
+    <!-- Load Leaflet from CDN --> 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
+    integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+    crossorigin=""></script>
+    
+    <!-- Load Esri Leaflet From CDN -->
+    <script src="https://unpkg.com/esri-leaflet@2.2.4/dist/esri-leaflet.js"
+    integrity="sha512-tyPum7h2h36X52O2gz+Pe8z/3l+Y9S1yEUscbVs5r5aEY5dFmP1WWRY/WLLElnFHa+k1JBQZSCDGwEAnm2IxAQ=="
+    crossorigin=""></script>
+    
+    <!-- Load jQuery from CDN -->
+    <script
+    src="https://code.jquery.com/jquery-3.4.1.js"
+    integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+    crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: whitesmoke;
+            font-family: Lato, sans-serif;
+            color: #0D0000;
+        }
+        header {
+            height: 60px;
+            background-color: dodgerblue;
+        }
+        h1 {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: auto;
+            margin-top: auto;
+            color: #001323;
+        }
+        h2 {
+            display: inline-block;
+            color: #001323;
+            margin-bottom: auto;
+            margin-top: auto;
+        }
+        #map {
+            width: 150px;
+            height: 150px;
+            margin: 10px auto;
+        }
+        footer {
+            padding: 6px 10%;
+            width: 80%;
+        }
+        p {
+            font-size: 1em;
+            color: #001323;
+            margin: 10%
+        }
+        /* Create three equal columns that floats next to each other */
+        .column {
+            float: left;
+            width: 50%;
+        }
+
+        /* Clear floats after the columns */
+        .row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+        Responsive layout - makes the three columns stack on top of each other instead of next to each other on smaller screens (600px wide or less) */
+        /*@media screen and (max-width: 600px) {
+            .column {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Hydro Power Plants</h1>
+        <h2>Map Subtitle</h2>
+    </header>
+
+    <p id="demo"></p>
+    
+    <div class="column">
+        <div id='map'></div>
+    </div>
+    
+    <div class="column">
+        <h2 id="address"><b></b></h2></div>
+    
+
+    <footer>
+        <p>Map authored by YOUR NAME</p>
+        <p>Additional information about the data and map goes here.</p>
+    </footer>
+
+    <script>
+    
+        
+        
+    // Load saved parcel information    
+    var loadedParcel = JSON.parse(localStorage.getItem("returnedParcelInformation"));
+    console.log(loadedParcel);
+    // Zoom to selected location
+        
+        
+    //Load bounds to zoom on
+    //var loadedBounds = JSON.parse(localStorage.getItem("zoom"));
+    //console.log(loadedBounds);
+    
+    //Reformat html pulled so you can see object in console
+    document.getElementById("demo").innerHTML = loadedParcel.BMP;
+        
+    //Prefix variable
+    var begin = 'DemoParcels_SpatialJoin_';
+    console.log(begin);
+    
+    var address = (loadedParcel.DemoParcels_SpatialJoin_ST_ADDR);
+    console.log(address);
+    document.getElementById('address').innerHTML = address;
+        
+    // Create Map
+        var map = L.map("map",{minZoom: 16}).setView([40.869355, -74.430078], 16,);
+        //Basemap layer (imagery)
+        L.esri.basemapLayer("ImageryClarity").addTo(map);
+        //Basemap Labels
+        L.esri.basemapLayer('ImageryLabels').addTo(map);
+        //World Transportation Layer
+        L.esri.tiledMapLayer({
+            url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer'
+        }).addTo(map);
+        
+    // Impervious area layer (No popup required. Unable to click)
+        var imperviousArea = L.esri.featureLayer({
+            url: 'https://services1.arcgis.com/wXxzXUPXryxeZXDC/arcgis/rest/services/NJ_Stormwater_Billing/FeatureServer/2?token=7fAjsv7jowRhP0shovQTVLtR5_M_wqC591tQ3VKIsHTfE2UJh96srOAcnXj4Jyu7U3_twf6QzAecFEdbyK4dDr8i8Nr8Ounn3fsx5lAKdF5JYxmdNxqGwqpMW_74cjgDtUoMkk3aJrU9zy3OXawrvuUM29ucYePprGmJRG8O1xU_33ueFeQKYecAfohAUChvynJS3Uo7H3EuHsOUsK2sEgYNiY5U8y9lDMOC1hchLKvAbwfoWrdhpHVTc5_RipGO',
+            style: {
+                fill: true,
+                fillColor: 'gold',
+                fillOpacity: 0.3,
+                color: 'yellow',
+                weight: .2
+            },
+            interactive: false
+        }).addTo(map);
+        
+        // Parcel layer (popup enabled)
+        var parcels = L.esri.featureLayer({
+            url: 'https://services1.arcgis.com/wXxzXUPXryxeZXDC/arcgis/rest/services/NJ_Stormwater_Billing/FeatureServer/1?token=SliUmHxvuis8fbeoDfBt6ocQtHrdHp9NNlYt-CuKKEm5PYAD9vTb_718SL4XPfgM4jM6_VjhLpKF1y0w6funCNB6PTUD2CsDz-K4jEaOjlqIE8nK5NQA4fKHbcasBsjiuQA2T_JutZQfoHCcSLmzwZEENY8HbCYsaOh1KocG69jzUmESBZ_NQjfCzCXae16-tLIIFrFn9VvLqEJGt7vJc5kmSwJM3cD-skyWQ6kObAbw0E58a4buNCF-5DiMh6EW',
+            onEachFeature : function(feature,layer) {
+                //console.log(layer.feature)
+                var parcelID = String(layer.feature.properties.DemoParcels_SpatialJoin_PAMS_PI);
+                var parcelIDNoUnderscore = parcelID.replace(/_/g," ");
+                layer.bindPopup("<b>Parcel ID: </b>" + parcelIDNoUnderscore + "<br>" + '<a href="testPage.html" target="_blank"">Parcel Information</a>')
+                layer.on('click', function() {
+                    var click = parcelIDNoUnderscore;
+                    localStorage.setItem("parcelClicked",click);
+                    var searchedParcel = layer.feature.properties;
+                    localStorage.setItem("returnedParcelInformation",JSON.stringify(searchedParcel));
+                });
+                
+            },
+            style : {
+                fill: true,
+                fillOpacity: 0,
+                color: 'red',
+                weight: 1
+            }
+            
+        }).addTo(map);
+        
+        map.invalidateSize(false);
+
+       
+                  
+    </script>
+    
+</body>
+
+</html>

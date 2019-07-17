@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset=utf-8 />
+    <title>Stormwater Viewer</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+    <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+    
+    <!-- Load Leaflet from CDN --> 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.5.1/dist/leaflet.css"
+    integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
+    crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.5.1/dist/leaflet.js"
+    integrity="sha512-GffPMF3RvMeYyc1LWMHtK8EbPv0iNZ8/oTtHPx9/cc2ILxQ+u905qIwdpULaqDkyBKgOaB57QTMg7ztg8Jm2Og=="
+    crossorigin=""></script>
+    
+    <!-- Load Esri Leaflet From CDN -->
+    <script src="https://unpkg.com/esri-leaflet@2.2.4/dist/esri-leaflet.js"
+    integrity="sha512-tyPum7h2h36X52O2gz+Pe8z/3l+Y9S1yEUscbVs5r5aEY5dFmP1WWRY/WLLElnFHa+k1JBQZSCDGwEAnm2IxAQ=="
+    crossorigin=""></script>
+    
+    <!-- Load jQuery from CDN -->
+    <script
+    src="https://code.jquery.com/jquery-3.4.1.js"
+    integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+    crossorigin="anonymous"></script>
+
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: whitesmoke;
+            font-family: Lato, sans-serif;
+            color: #0D0000;
+        }
+        header {
+            height: 60px;
+            background-color: dodgerblue;
+        }
+        h1 {
+            display: inline-block;
+            color: whitesmoke;
+            vertical-align: middle;
+            margin-top: auto;
+            margin-right: 20px;
+            margin-left: 8px;
+        }
+        h2 {
+            display: inline-block;
+            color: whitesmoke;
+            height: 100%;
+        }
+        #map {
+            position: absolute;
+            top: 60px;
+            bottom: 0;
+            right: 0;
+            left: 0;
+        }
+        footer {
+            padding: 6px 10%;
+            width: 80%;
+        }
+        p {
+            font-size: 1em;
+            color: #001323;
+        }
+        .squareParcels {
+            height: 15px;
+            width: 15px;
+            border-style: solid;
+            border-color: red;
+            border-width: 1px
+        }
+        .squareImpervious {
+            height: 15px;
+            width: 15px;
+            background-color: gold;
+        }
+        .lefendTitle {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        h3 {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Stormwater Viewer</h1>
+        <h2>Map Subtitle</h2>
+    </header>
+
+    <div id='map'></div>
+
+
+    <script>
+        
+        // Create Map
+        var map = L.map("map",{minZoom: 16}).setView([40.869355, -74.430078], 16,);
+        //Basemap layer (imagery)
+        L.esri.basemapLayer("ImageryClarity").addTo(map);
+        //Basemap Labels
+        L.esri.basemapLayer('ImageryLabels').addTo(map);
+        //World Transportation Layer
+        L.esri.tiledMapLayer({
+            url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer'
+        }).addTo(map);
+        
+        
+        // Impervious area layer (No popup required. Unable to click)
+        var imperviousArea = L.esri.featureLayer({
+            url: 'https://services1.arcgis.com/wXxzXUPXryxeZXDC/arcgis/rest/services/NJ_Stormwater_Billing/FeatureServer/2?token=7fAjsv7jowRhP0shovQTVLtR5_M_wqC591tQ3VKIsHTfE2UJh96srOAcnXj4Jyu7U3_twf6QzAecFEdbyK4dDr8i8Nr8Ounn3fsx5lAKdF5JYxmdNxqGwqpMW_74cjgDtUoMkk3aJrU9zy3OXawrvuUM29ucYePprGmJRG8O1xU_33ueFeQKYecAfohAUChvynJS3Uo7H3EuHsOUsK2sEgYNiY5U8y9lDMOC1hchLKvAbwfoWrdhpHVTc5_RipGO',
+            style: {
+                fill: true,
+                fillColor: 'gold',
+                fillOpacity: 0.3,
+                color: 'yellow',
+                weight: .2
+            },
+            interactive: false
+        }).addTo(map);
+        
+        // Parcel layer (popup enabled)
+        var parcels = L.esri.featureLayer({
+            url: 'https://services1.arcgis.com/wXxzXUPXryxeZXDC/arcgis/rest/services/NJ_Stormwater_Billing/FeatureServer/1?token=SliUmHxvuis8fbeoDfBt6ocQtHrdHp9NNlYt-CuKKEm5PYAD9vTb_718SL4XPfgM4jM6_VjhLpKF1y0w6funCNB6PTUD2CsDz-K4jEaOjlqIE8nK5NQA4fKHbcasBsjiuQA2T_JutZQfoHCcSLmzwZEENY8HbCYsaOh1KocG69jzUmESBZ_NQjfCzCXae16-tLIIFrFn9VvLqEJGt7vJc5kmSwJM3cD-skyWQ6kObAbw0E58a4buNCF-5DiMh6EW',
+            onEachFeature : function(feature,layer) {
+                //console.log(layer.feature)
+                var parcelID = String(layer.feature.properties.DemoParcels_SpatialJoin_PAMS_PI);
+                var parcelIDNoUnderscore = parcelID.replace(/_/g," ");
+                layer.bindPopup("<b>Parcel ID: </b>" + parcelIDNoUnderscore + "<br>" + '<a href="testPage.html"">Parcel Information</a>')
+                layer.on('click', function() {
+                    var click = parcelIDNoUnderscore;
+                    localStorage.setItem("parcelClicked",click);
+                    var searchedParcel = layer.feature.properties;
+                    localStorage.setItem("returnedParcelInformation",JSON.stringify(searchedParcel));
+                    console.log(searchedParcel);
+                });
+                
+            },
+            style : {
+                fill: true,
+                fillOpacity: 0,
+                color: 'red',
+                weight: 1
+            }
+            
+        }).addTo(map);
+        
+    
+        
+        parcels.on('click', function(evt){
+            var bounds = evt.layer.getBounds()
+            console.log(bounds)
+            localStorage.setItem("zoom",JSON.stringify(bounds));
+        })
+        
+        
+        //styling for layer control
+        var allLayers = {
+            "<b style='color: black'>Parcels <div class=squareParcels></div></b>": parcels,
+            "<b style='color: black'>Impervious Surface <div class=squareImpervious></div></b>": imperviousArea
+        };
+        // layer control
+        L.control.layers(null, allLayers, { collapsed:false, autoZIndex:true, position: 'bottomleft'}).addTo(map);
+        $('<h3 id="legendTitle">Legend</h3>').insertBefore('div.leaflet-control-layers-base');
+        
+        
+
+        //disable scroll wheel (TEMPORARY)
+        //map.scrollWheelZoom.disable();
+       
+
+                  
+    </script>
+    
+</body>
+
+</html>
